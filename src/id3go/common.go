@@ -1,6 +1,8 @@
 package id3go
 
 const (
+	tagStart = 3
+
 	titleEnd   = 30
 	artistEnd  = 60
 	albumEnd   = 90
@@ -8,9 +10,9 @@ const (
 	commentEnd = 124
 
 	// First three chars of an ID3 tag are static "TAG"
-	tagStart = 3
 
-	tagSize = 128
+	tagSize         = 128
+	maxStringLength = 30
 )
 
 type Id3V1Tag struct {
