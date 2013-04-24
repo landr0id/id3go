@@ -46,7 +46,12 @@ func main() {
 
 		// file
 		if !finfo.IsDir() {
-			printTag(filename)
+			res, _ := id3go.ReadId3V1Tag(filename) //printTag(filename)
+			res.Title = "HELLO THIS IS TEST"
+			err := id3go.WriteId3V1Tag(filename, res)
+			if err != nil {
+				fmt.Println(err)
+			}
 
 		} else { // Folder
 			errChan := make(chan error, 64)
