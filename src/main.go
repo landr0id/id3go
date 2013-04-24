@@ -1,64 +1,61 @@
 package main
 
 import (
-    "flag"
-    "fmt"
-    "id3go"
-    "os"
-    "path/filepath"
-    "log"
+	"./id3go"
+	"flag"
+	"fmt"
+	"log"
+	"os"
+	"path/filepath"
 )
 
-// File visitor for doing paths recursively
-type id3Visitor int
-
-func (v id3Visitor) VisitFile (path string, f *os.FileInfo) {
-    printTag(path)
+func VisitFile(path string, f *os.FileInfo) {
+	printTag(path)
 }
 
-func (v id3Visitor) VisitDir (path string, f *os.FileInfo) bool {
-    fmt.Println(path)
-    return true;
+func VisitDir(path string, f os.FileInfo, er error) error {
+	fmt.Println(path)
+	return nil
 }
 
 func printTag(filename string) {
-    fmt.Println(filename)
+	fmt.Println(filename)
 
-    res, err := id3go.ReadId3V1Tag(filename)
+	res, err := id3go.ReadId3V1Tag(filename)
+	if err != nil {
+		log.Print(err)
+	}
 
-    if (err != nil) {
-        log.Print(err)
-    }
-
-    for k, v := range(res) {
-        fmt.Printf("%s => %s\n", k, v)
-    }
-    fmt.Println()
+	fmt.Println("Title:", res.Title)
+	fmt.Println("Artist:", res.Artist)
+	fmt.Println("Album:", res.Album)
+	fmt.Println("Comment:", res.Comment)
+	fmt.Println()
 }
 
 func main() {
-    flag.Parse()
+	flag.Parse()
 
-    for _, filename := range(flag.Args()) {
-        finfo, err := os.Stat(filename)
+	for _, filename := range flag.Args() {
+		finfo, err := os.Stat(filename)
 
-        if (err != nil) {
-            log.Print(err)
-            continue
-        }
+		if err != nil {
+			log.Print(err)
+			continue
+		}
 
-        if (finfo.IsRegular()) {
-            printTag(filename)
+		// file
+		if !finfo.IsDir() {
+			printTag(filename)
 
-        } else if (finfo.IsDirectory()) {
-            v := new(id3Visitor)
-            errChan := make(chan os.Error, 64)
-            filepath.Walk(filename, v, errChan)
-            select {
-                case err := <-errChan:
-                    log.Print(err)
-                default:
-            }
-        }
-    }
+		} else { // Folder
+			errChan := make(chan error, 64)
+			filepath.Walk(filename, VisitDir)
+			select {
+			case err := <-errChan:
+				log.Print(err)
+			default:
+			}
+		}
+	}
 }
